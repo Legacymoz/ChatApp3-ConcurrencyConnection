@@ -22,7 +22,9 @@
 #include "auth.h"
 #include "chat.h"
 #include "utils.h"
+#include "network_server.h"
 #include "../shared/models.h"
+#include "../shared/network_config.h"
 
 #define USERS_FILE "../data/users.txt"
 #define MESSAGES_FILE "../data/messages.txt"
@@ -147,6 +149,7 @@ void shutdown_server(int signal) {
     printf("\n[+] Server shutting down. Goodbye.\n");
     server_running = 0;
     CLOSE_SOCKET(server_socket);
+    cleanup_server_network();
     
     #ifdef _WIN32
         WSACleanup();
@@ -159,6 +162,8 @@ int main() {
     struct sockaddr_in server_addr, client_addr;
     SOCKET client_socket;
     int addr_len = sizeof(client_addr);
+    SOCKET discovery_socket;
+    fd_set read_fds;
     
     #ifdef _WIN32
         // Initialize Winsock
@@ -176,6 +181,15 @@ int main() {
     create_file_if_missing(USERS_FILE);
     create_file_if_missing(MESSAGES_FILE);
     
+    if (!initialize_server_network()) {
+        #ifdef _WIN32
+            WSACleanup();
+        #endif
+        return 1;
+    }
+
+    discovery_socket = get_discovery_socket();
+
     // Create socket
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket == INVALID_SOCKET) {
@@ -223,23 +237,44 @@ int main() {
     
     // Main server loop - accept connections one at a time (iterative server)
     while (server_running) {
-        client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &addr_len);
-        if (client_socket == INVALID_SOCKET) {
+        FD_ZERO(&read_fds);
+        FD_SET(server_socket, &read_fds);
+
+        if (discovery_socket != INVALID_SOCKET) {
+            FD_SET(discovery_socket, &read_fds);
+        }
+
+        if (select(0, &read_fds, NULL, NULL, NULL) == SOCKET_ERROR) {
             if (server_running) {
-                printf("[!] Accept failed\n");
+                printf("[!] Select failed\n");
             }
             continue;
         }
-        
-        // Handle the client request
-        handle_client(client_socket);
-        
-        // Close client connection after handling
-        CLOSE_SOCKET(client_socket);
+
+        if (discovery_socket != INVALID_SOCKET && FD_ISSET(discovery_socket, &read_fds)) {
+            handle_discovery_request(discovery_socket);
+        }
+
+        if (FD_ISSET(server_socket, &read_fds)) {
+            client_socket = accept(server_socket, (struct sockaddr *)&client_addr, &addr_len);
+            if (client_socket == INVALID_SOCKET) {
+                if (server_running) {
+                    printf("[!] Accept failed\n");
+                }
+                continue;
+            }
+
+            // Handle the client request
+            handle_client(client_socket);
+
+            // Close client connection after handling
+            CLOSE_SOCKET(client_socket);
+        }
     }
     
     // Cleanup
     CLOSE_SOCKET(server_socket);
+    cleanup_server_network();
     #ifdef _WIN32
         WSACleanup();
     #endif

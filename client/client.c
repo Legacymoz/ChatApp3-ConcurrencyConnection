@@ -24,6 +24,7 @@
 #endif
 
 #include "ui.h"
+#include "network_client.h"
 #include "../shared/models.h"
 
 // Global state
@@ -93,7 +94,7 @@ int connect_to_server() {
     // Configure server address
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(PORT);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    server_addr.sin_addr.s_addr = inet_addr(get_server_ip());
     
     // Connect to server
     if (connect(sock, (struct sockaddr *)&server_addr, sizeof(server_addr)) == SOCKET_ERROR) {
@@ -624,6 +625,14 @@ int main() {
         }
     #endif
     
+    if (!initialize_server_address()) {
+        printf("Failed to determine server address.\n");
+        #ifdef _WIN32
+            WSACleanup();
+        #endif
+        return 1;
+    }
+
     // Main application loop
     while (app_running) {
         if (is_logged_in) {
