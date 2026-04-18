@@ -232,6 +232,9 @@ int main() {
         #endif
         return 1;
     }
+
+    printf("[Network] Tailscale active. Local Tailscale IP: ...\n");
+    printf("[Network] LAN discovery ready on port %d.\n", DISCOVERY_PORT);
     
     printf("[+] Server started. Listening on port %d...\n\n", PORT);
     
@@ -264,7 +267,16 @@ int main() {
                 continue;
             }
 
-            // Handle the client request
+            // Print client IP address
+        char client_ip[INET_ADDRSTRLEN];
+        #ifdef _WIN32
+            strcpy(client_ip, inet_ntoa(client_addr.sin_addr));
+        #else
+            inet_ntop(AF_INET, &(client_addr.sin_addr), client_ip, INET_ADDRSTRLEN);
+        #endif
+        printf("[Connection] Client IP address %s connected to the server successfully.\n", client_ip);
+
+                    // Handle the client request
             handle_client(client_socket);
 
             // Close client connection after handling

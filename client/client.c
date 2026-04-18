@@ -102,6 +102,10 @@ int connect_to_server() {
         CLOSE_SOCKET(sock);
         return -1;
     }
+
+    // Print connection success message
+    printf("[Network] Successfully connected to the server IP address %s\n", inet_ntoa(server_addr.sin_addr));
+
     
     return (int)sock;
 }
@@ -616,20 +620,33 @@ void display_dashboard() {
 }
 
 int main() {
-    #ifdef _WIN32
-        // Initialize Winsock
-        WSADATA wsa_data;
-        if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
-            printf("Failed to initialize Winsock\n");
-            return 1;
+#ifdef _WIN32
+    // Initialize Winsock
+    WSADATA wsa_data;
+    if (WSAStartup(MAKEWORD(2, 2), &wsa_data) != 0) {
+        printf("Failed to initialize Winsock\n");
+        return 1;
+    }
+#endif
+
+    int mode = 0;
+    while (mode != 1 && mode != 2) {
+        printf("\nSelect connection mode:\n[1] Tailnet\n[2] Same LAN\nChoice: ");
+        char input[16];
+        if (!fgets(input, sizeof(input), stdin)) {
+            continue;
         }
-    #endif
-    
-    if (!initialize_server_address()) {
+        mode = atoi(input);
+        if (mode != 1 && mode != 2) {
+            printf("Invalid choice. Please enter 1 or 2.\n");
+        }
+    }
+
+    if (!initialize_server_address(mode)) {
         printf("Failed to determine server address.\n");
-        #ifdef _WIN32
-            WSACleanup();
-        #endif
+#ifdef _WIN32
+        WSACleanup();
+#endif
         return 1;
     }
 
@@ -641,13 +658,13 @@ int main() {
             display_main_menu();
         }
     }
-    
+
     ui_clear_screen();
     printf("\n  Goodbye!\n\n");
-    
-    #ifdef _WIN32
-        WSACleanup();
-    #endif
-    
+
+#ifdef _WIN32
+    WSACleanup();
+#endif
+
     return 0;
 }

@@ -154,53 +154,50 @@ static int discover_server_on_lan(char *discovered_ip, size_t discovered_ip_size
     return 1;
 }
 
-int initialize_server_address() {
+int initialize_server_address(int mode) {
     char status_output[4096];
     char tailscale_ip[INET_ADDRSTRLEN];
     char magicdns_name[256];
     char resolved_ip[INET_ADDRSTRLEN];
 
-    if (get_tailscale_status(status_output, sizeof(status_output), tailscale_ip, sizeof(tailscale_ip)) &&
-        strstr(status_output, "offline") == NULL) {
-        printf("\n[Network] Tailscale detected and active.\n");
+    if (mode == NETWORK_MODE_TAILSCALE) {
+        printf("\n[Network] Tailnet mode selected.\n");
+        if (!get_tailscale_status(status_output, sizeof(status_output), tailscale_ip, sizeof(tailscale_ip)) ||
+            strstr(status_output, "offline") != NULL) {
+            printf("[Network] Tailscale is not active on this machine.\n");
+            return 0;
+        }
         printf("[Network] Local Tailscale IP: %s\n", tailscale_ip);
         printf("Enter the Server's MagicDNS name: ");
-
         if (fgets(magicdns_name, sizeof(magicdns_name), stdin) == NULL) {
             return 0;
         }
-
         magicdns_name[strcspn(magicdns_name, "\r\n")] = '\0';
-
         if (strlen(magicdns_name) == 0) {
             printf("[Network] MagicDNS name cannot be empty.\n");
             return 0;
         }
-
         if (!resolve_magicdns_name(magicdns_name, resolved_ip, sizeof(resolved_ip))) {
             printf("[Network] Failed to resolve MagicDNS name.\n");
             return 0;
         }
-
         strncpy(server_ip, resolved_ip, sizeof(server_ip) - 1);
         server_ip[sizeof(server_ip) - 1] = '\0';
-
-        printf("[Network] Resolved server IP: %s\n\n", server_ip);
+        printf("[Network] Server resolved: %s\n", server_ip);
+        return 1;
+    } else if (mode == NETWORK_MODE_LAN) {
+        printf("\n[Network] Same LAN mode selected.\n");
+        printf("[Network] Scanning for the server...\n");
+        if (!discover_server_on_lan(resolved_ip, sizeof(resolved_ip))) {
+            printf("[Network] Server not found on LAN.\n");
+            return 0;
+        }
+        strncpy(server_ip, resolved_ip, sizeof(server_ip) - 1);
+        server_ip[sizeof(server_ip) - 1] = '\0';
+        printf("[Network] Server found: %s\n", server_ip);
         return 1;
     }
-
-    printf("\n[Network] Tailscale unavailable or offline. Falling back to LAN discovery...\n");
-
-    if (!discover_server_on_lan(resolved_ip, sizeof(resolved_ip))) {
-        printf("[Network] LAN discovery failed.\n");
-        return 0;
-    }
-
-    strncpy(server_ip, resolved_ip, sizeof(server_ip) - 1);
-    server_ip[sizeof(server_ip) - 1] = '\0';
-
-    printf("[Network] Server discovered at %s\n\n", server_ip);
-    return 1;
+    return 0;
 }
 
 const char *get_server_ip() {
