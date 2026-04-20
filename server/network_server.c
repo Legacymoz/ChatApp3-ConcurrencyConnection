@@ -108,7 +108,6 @@ static int determine_lan_ip(char *ip_buffer, size_t ip_buffer_size) {
         }
         index++;
     }
-    printf("[Network] Using LAN IP: %s\n", local_lan_ip);
 
     return 0;
 }
@@ -147,10 +146,10 @@ int initialize_server_network() {
         printf("[Network] Tailscale detected and active.\n");
         printf("[Network] Local Tailscale IP: %s\n", local_tailscale_ip);
         
+    } else {
+        network_mode = NETWORK_MODE_LAN;
+        printf("[Network] Tailscale unavailable or offline. Using LAN discovery mode.\n");
     }
-
-    network_mode = NETWORK_MODE_LAN;
-    printf("[Network] Tailscale unavailable or offline. Using LAN discovery mode.\n");
 
     if (!determine_lan_ip(local_lan_ip, sizeof(local_lan_ip))) {
         printf("[Network] Failed to determine LAN IP.\n");
