@@ -101,7 +101,8 @@ static int determine_lan_ip(char *ip_buffer, size_t ip_buffer_size) {
         if (converted != NULL &&
             strcmp(converted, "127.0.0.1") != 0 &&
             strncmp(converted, "192.168.56.", 11) != 0 &&   // skip VirtualBox
-            strncmp(converted, "100.", 4) != 0) {            // skip Tailscale
+            strncmp(converted, "100.", 4) != 0 &&           // skip Tailscale
+            strncmp(converted, "172.30.", 7) != 0) {            // skip WSL vEthernet
             strncpy(ip_buffer, converted, ip_buffer_size - 1);
             ip_buffer[ip_buffer_size - 1] = '\0';
             return 1;
