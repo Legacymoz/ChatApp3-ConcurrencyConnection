@@ -106,6 +106,7 @@ static int determine_lan_ip(char *ip_buffer, size_t ip_buffer_size) {
 
         index++;
     }
+    printf("[Network] Using LAN IP: %s\n", local_lan_ip);
 
     return 0;
 }
@@ -143,7 +144,7 @@ int initialize_server_network() {
         network_mode = NETWORK_MODE_TAILSCALE;
         printf("[Network] Tailscale detected and active.\n");
         printf("[Network] Local Tailscale IP: %s\n", local_tailscale_ip);
-        return 1;
+        
     }
 
     network_mode = NETWORK_MODE_LAN;
@@ -197,6 +198,9 @@ void handle_discovery_request(SOCKET socket_handle) {
 
     sendto(socket_handle, response, (int)strlen(response), 0,
            (struct sockaddr *)&client_addr, client_addr_len);
+
+    printf("[Discovery] Responded to LAN discovery from %s:%d\n",
+       inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 }
 
 void cleanup_server_network() {
