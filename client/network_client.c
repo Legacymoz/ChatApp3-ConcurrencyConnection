@@ -196,7 +196,24 @@ int initialize_server_address(int mode) {
         server_ip[sizeof(server_ip) - 1] = '\0';
         printf("[Network] Server found: %s\n", server_ip);
         return 1;
+    } else if (mode == NETWORK_MODE_MANUAL) {
+        char manual_ip[INET_ADDRSTRLEN];
+        printf("\n[Network] Manual mode selected.\n");
+        printf("Enter the Server's IP address: ");
+        if (fgets(manual_ip, sizeof(manual_ip), stdin) == NULL) {
+            return 0;
+        }
+        manual_ip[strcspn(manual_ip, "\r\n")] = '\0';
+        if (strlen(manual_ip) == 0) {
+            printf("[Network] IP address cannot be empty.\n");
+            return 0;
+        }
+        strncpy(server_ip, manual_ip, sizeof(server_ip) - 1);
+        server_ip[sizeof(server_ip) - 1] = '\0';
+        printf("[Network] Server set to: %s\n", server_ip);
+        return 1;
     }
+
     return 0;
 }
 

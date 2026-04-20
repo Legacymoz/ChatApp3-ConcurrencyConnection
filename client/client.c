@@ -630,15 +630,15 @@ int main() {
 #endif
 
     int mode = 0;
-    while (mode != 1 && mode != 2) {
-        printf("\nSelect connection mode:\n[1] Tailnet\n[2] Same LAN\nChoice: ");
+    while (mode != 1 && mode != 2 && mode != 3) {
+        printf("\nSelect connection mode:\n[1] Tailnet\n[2] Same LAN\n[3] Manual IP\nChoice: ");
         char input[16];
         if (!fgets(input, sizeof(input), stdin)) {
             continue;
         }
         mode = atoi(input);
-        if (mode != 1 && mode != 2) {
-            printf("Invalid choice. Please enter 1 or 2.\n");
+        if (mode != 1 && mode != 2 && mode != 3) {
+            printf("Invalid choice. Please enter 1, 2, or 3.\n");
         }
     }
 
