@@ -15,7 +15,7 @@ void ui_clear_screen() {
 }
 
 // Renders a bordered header
-void ui_display_header(char title[]) {
+void ui_display_header(const char title[]) {
     int title_len = strlen(title);
     int padding = (HEADER_WIDTH - title_len - 2) / 2;
     
@@ -106,7 +106,7 @@ void ui_display_inbox(char contacts[][50], int count) {
 }
 
 // Renders the active chat session header
-void ui_display_chat_screen(char me[], char partner[]) {
+void ui_display_chat_screen(const char me[], const char partner[]) {
     ui_clear_screen();
     
     char header[100];

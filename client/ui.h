@@ -23,7 +23,7 @@ void ui_display_deregister_warning();
 void ui_display_inbox(char contacts[][50], int count);
 
 // Renders the active chat session header
-void ui_display_chat_screen(char me[], char partner[]);
+void ui_display_chat_screen(const char me[], const char partner[]);
 
 // Renders a single message
 void ui_display_message(char sender[], char timestamp[], char text[]);
@@ -47,6 +47,6 @@ void ui_clear_screen();
 void ui_wait_for_enter();
 
 // Renders a bordered header
-void ui_display_header(char title[]);
+void ui_display_header(const char title[]);
 
 #endif // UI_H
